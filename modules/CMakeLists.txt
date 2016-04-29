@@ -12,6 +12,7 @@ endfunction(linkModule)
 
 include_directories(./common)
 
+add_subdirectory(amqpserver)
 add_subdirectory(ble)
 add_subdirectory(simulated_device)
 add_subdirectory(identitymap)
