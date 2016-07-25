@@ -22,6 +22,7 @@ typedef struct PERSONALITY_TAG
 {
     STRING_HANDLE deviceName;
     STRING_HANDLE deviceKey;
+    bool isToken;
     IOTHUB_CLIENT_HANDLE iothubHandle;
     MESSAGE_BUS_HANDLE busHandle;
 }PERSONALITY;
@@ -41,6 +42,7 @@ typedef struct IOTHUBHTTP_HANDLE_DATA_TAG
 #define MAPPING "mapping"
 #define DEVICENAME "deviceName"
 #define DEVICEKEY "deviceKey"
+#define DEVICETOKEN "deviceToken"
 
 static MODULE_HANDLE IoTHubHttp_Create(MESSAGE_BUS_HANDLE busHandle, const void* configuration)
 {
@@ -267,7 +269,7 @@ static IOTHUBMESSAGE_DISPOSITION_RESULT IoTHubHttp_ReceiveMessageCallback(IOTHUB
 }
 
 /*returns non-null if PERSONALITY has been properly populated*/
-static PERSONALITY_PTR PERSONALITY_create(const char* deviceName, const char* deviceKey, IOTHUBHTTP_HANDLE_DATA* moduleHandleData)
+static PERSONALITY_PTR PERSONALITY_create(const char* deviceName, const char* deviceKey, bool isToken, IOTHUBHTTP_HANDLE_DATA* moduleHandleData)
 {
     PERSONALITY_PTR result = (PERSONALITY_PTR)malloc(sizeof(PERSONALITY));
     if (result == NULL)
@@ -293,12 +295,12 @@ static PERSONALITY_PTR PERSONALITY_create(const char* deviceName, const char* de
         {
             IOTHUB_CLIENT_CONFIG temp;
             temp.deviceId = deviceName;
-            temp.deviceKey = deviceKey;
+            temp.deviceKey = isToken ? NULL : deviceKey;
             temp.iotHubName = STRING_c_str(moduleHandleData->IoTHubName);
             temp.iotHubSuffix = STRING_c_str(moduleHandleData->IoTHubSuffix);
             temp.protocol = HTTP_Protocol;
             temp.protocolGatewayHostName = NULL;
-            temp.deviceSasToken = NULL;
+            temp.deviceSasToken = !isToken ? NULL : deviceKey;
             if ((result->iothubHandle = IoTHubClient_CreateWithTransport(moduleHandleData->transportHandle, &temp)) == NULL)
             {
                 LogError("unable to IoTHubClient_CreateWithTransport");
@@ -337,16 +339,31 @@ static void PERSONALITY_destroy(PERSONALITY* personality)
     IoTHubClient_Destroy(personality->iothubHandle);
 }
 
-static PERSONALITY* PERSONALITY_find_or_create(IOTHUBHTTP_HANDLE_DATA* moduleHandleData, const char* deviceName, const char* deviceKey)
+static PERSONALITY* PERSONALITY_find_or_create(IOTHUBHTTP_HANDLE_DATA* moduleHandleData, const char* deviceName, const char* deviceKey, bool isToken)
 {
     /*Codes_SRS_IOTHUBHTTP_02_017: [If the deviceName exists in the PERSONALITY collection then IoTHubHttp_Receive shall not create a new IOTHUB_CLIENT_HANDLE.]*/
     PERSONALITY* result;
     PERSONALITY_PTR* resultPtr = VECTOR_find_if(moduleHandleData->personalities, lookup_DeviceName, deviceName);
+    if (resultPtr != NULL)
+    {
+        result = *resultPtr;
+
+        if (isToken && deviceKey && 0 != strcmp(STRING_c_str(result->deviceKey), deviceKey))
+        {
+            LogInfo("Renewing token for device %s", deviceName);
+
+            /* Remove and recreate - Todo: Add token provider callback to sdk */
+            VECTOR_erase(moduleHandleData->personalities, resultPtr, 1);
+            PERSONALITY_destroy(result);
+            resultPtr = NULL;
+        }
+    }
+
     if (resultPtr == NULL)
     {
         /*a new device has arrived!*/
         PERSONALITY_PTR personality;
-        if ((personality = PERSONALITY_create(deviceName, deviceKey, moduleHandleData)) == NULL)
+        if ((personality = PERSONALITY_create(deviceName, deviceKey, isToken, moduleHandleData)) == NULL)
         {
             LogError("unable to create a personality for the device %s", deviceName);
             result = NULL;
@@ -366,11 +383,7 @@ static PERSONALITY* PERSONALITY_find_or_create(IOTHUBHTTP_HANDLE_DATA* moduleHan
                 resultPtr = VECTOR_back(moduleHandleData->personalities);
                 result = *resultPtr;
             }
-            }
         }
-    else
-    {
-        result = *resultPtr;
     }
     return result;
 }
@@ -440,6 +453,7 @@ static IOTHUB_MESSAGE_HANDLE IoTHubMessage_CreateFromGWMessage(MESSAGE_HANDLE me
 
 static void IoTHubHttp_Receive(MODULE_HANDLE moduleHandle, MESSAGE_HANDLE messageHandle)
 {
+    bool isToken = false;
     /*Codes_SRS_IOTHUBHTTP_02_009: [If moduleHandle or messageHandle is NULL then IoTHubHttp_Receive shall do nothing.]*/
     if (
         (moduleHandle == NULL) ||
@@ -476,14 +490,16 @@ static void IoTHubHttp_Receive(MODULE_HANDLE moduleHandle, MESSAGE_HANDLE messag
                 const char* deviceKey = ConstMap_GetValue(properties, DEVICEKEY);
                 if (deviceKey == NULL)
                 {
-                    /*do nothing, missing device key*/
+                    deviceKey = ConstMap_GetValue(properties, DEVICETOKEN);
+                    isToken = true;
                 }
-                else
+                
+                if (deviceKey != NULL)
                 {
                     IOTHUBHTTP_HANDLE_DATA* moduleHandleData = moduleHandle;
                     /*Codes_SRS_IOTHUBHTTP_02_013: [If the deviceName does not exist in the PERSONALITY collection then IoTHubHttp_Receive shall create a new IOTHUB_CLIENT_HANDLE by a call to IoTHubClient_CreateWithTransport.]*/
                     
-                    PERSONALITY* whereIsIt = PERSONALITY_find_or_create(moduleHandleData, deviceName, deviceKey);
+                    PERSONALITY* whereIsIt = PERSONALITY_find_or_create(moduleHandleData, deviceName, deviceKey, isToken);
                     if (whereIsIt == NULL)
                     {
                         /*Codes_SRS_IOTHUBHTTP_02_014: [If creating the PERSONALITY fails then IoTHubHttp_Receive shall return.]*/
