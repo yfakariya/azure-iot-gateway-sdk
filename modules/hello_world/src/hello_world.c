@@ -7,11 +7,11 @@
 #endif
 
 #include "module.h"
-#include "azure_c_shared_utility/iot_logging.h"
+#include "azure_c_shared_utility/xlogging.h"
 
 #include "azure_c_shared_utility/threadapi.h"
 #include "hello_world.h"
-#include "azure_c_shared_utility/iot_logging.h"
+#include "azure_c_shared_utility/xlogging.h"
 #include "azure_c_shared_utility/lock.h"
 
 typedef struct HELLOWORLD_HANDLE_DATA_TAG
@@ -66,7 +66,7 @@ int helloWorldThread(void *param)
                         }
                         else
                         {
-                            (void)MessageBus_Publish(handleData->busHandle, helloWorldMessage);
+                            (void)MessageBus_Publish(handleData->busHandle, (MODULE_HANDLE)handleData, helloWorldMessage);
                             (void)Unlock(handleData->lockHandle);
                         }
                     }

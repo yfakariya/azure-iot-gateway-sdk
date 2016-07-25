@@ -181,12 +181,16 @@ c/common/tools/macro_utils_h_generator/macro_utils_h_generator.exe
 **/hg/
 
 # Java
-java/**/.idea/
-java/**/out/
-java/**/target/
-java/**/*.iml
-java/**/*dependency-reduced-pom.xml
+**/java/**/.idea/
+**/java/**/out/
+**/java/**/target/
+**/java/**/*.iml
+**/java/**/*dependency-reduced-pom.xml
 tools/jenkins-cli.jar
+*.class
+*.jar
+**/target/
+*.iml
 
 # Node.js
 **/.settings/
@@ -197,16 +201,10 @@ tools/jenkins-cli.jar
 typings/**
 .vscode/**
 
-csharp/NuGet/*.exe
-csharp/NuGet/*.nupkg
-csharp/.vs/*
-service/java/.idea
-service/java/target
-service/java/iot.service.sdk.java.iml
-
 # ignore cmake build folder
 .cmake/**
-build/**
+*build/**
+build_nodejs/**
 
 # ignore Atom Editor files
 .atom-build.json

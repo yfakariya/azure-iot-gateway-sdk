@@ -17,6 +17,7 @@
 #define MODULE_H
 
 /** @brief Represents a handle to a particular module.*/
+typedef struct MODULE_TAG MODULE;
 typedef void* MODULE_HANDLE;
 typedef struct MODULE_APIS_TAG MODULE_APIS;
 
@@ -24,10 +25,40 @@ typedef struct MODULE_APIS_TAG MODULE_APIS;
 #include "message_bus.h"
 #include "message.h"
 
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+#ifdef UWP_BINDING
+
+	/** @brief	Interface containing module-specific implementations. */
+    class IInternalGatewayModule
+    {
+    public:
+		/** @brief Interface equivalent to #Module_Receive function. */
+        virtual void Module_Receive(MESSAGE_HANDLE messageHandle) = 0;
+    };
+
+#endif // UWP_BINDING
+
+	/** @brief	Structure used to represent/abstract the idea of a module.  May
+	*			contain Hamdle/FxnPtrs or an interface ptr or some unforseen
+	*			representation.
+	*/
+    typedef struct MODULE_TAG
+    {
+#ifdef UWP_BINDING
+		/** @brief Interface implementation for module. */
+		IInternalGatewayModule* module_instance;
+#else
+		/** @brief Struct containing function pointers */
+		const MODULE_APIS* module_apis;
+		/** @brief HANDLE for module. */
+		MODULE_HANDLE module_handle;
+#endif // UWP_BINDING
+    }MODULE;
 
 	/** @brief		Creates a module using the specified configuration connecting
 	*				to the specified message bus.
@@ -79,7 +110,7 @@ extern "C"
         pfModule_Receive Module_Receive;
     }MODULE_APIS;
 
-	/** @brief	This is the only function exported by a module. Using the 
+	/** @brief	This is the only function exported by a module. Using the
 	*			exported function, the caller learns the functions for the 
 	*			particular module.
 	*/

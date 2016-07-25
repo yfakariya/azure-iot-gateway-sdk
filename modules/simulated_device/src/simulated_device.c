@@ -5,7 +5,7 @@
 
 #include "simulated_device.h"
 #include "azure_c_shared_utility/threadapi.h"
-#include "azure_c_shared_utility/iot_logging.h"
+#include "azure_c_shared_utility/xlogging.h"
 #include "azure_c_shared_utility/crt_abstractions.h"
 #include "message.h"
 #include "messageproperties.h"
@@ -100,7 +100,7 @@ static int simulated_device_worker(void * user_data)
 						}
 						else
 						{
-							if (MessageBus_Publish(module_data->bus, newMessage) != MESSAGE_BUS_OK)
+							if (MessageBus_Publish(module_data->bus, (MODULE_HANDLE)module_data, newMessage) != MESSAGE_BUS_OK)
 							{
 								LogError("Failed to create new message");
 							}

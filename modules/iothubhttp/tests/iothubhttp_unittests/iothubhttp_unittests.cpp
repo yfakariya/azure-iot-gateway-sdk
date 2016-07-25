@@ -574,7 +574,7 @@ public:
 
 
 	// bus
-	MOCK_STATIC_METHOD_2(, MESSAGE_BUS_RESULT, MessageBus_Publish, MESSAGE_BUS_HANDLE, bus, MESSAGE_HANDLE, message)
+	MOCK_STATIC_METHOD_3(, MESSAGE_BUS_RESULT, MessageBus_Publish, MESSAGE_BUS_HANDLE, bus, MODULE_HANDLE, source, MESSAGE_HANDLE, message)
 	MOCK_METHOD_END(MESSAGE_BUS_RESULT, MESSAGE_BUS_OK)
 
 };
@@ -620,13 +620,13 @@ DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , IOTHUBMESSAGE_CONTENT_TYPE, IoT
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , void*, VECTOR_back, VECTOR_HANDLE, handle)
 DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , TRANSPORT_HANDLE, IoTHubTransport_Create, IOTHUB_CLIENT_TRANSPORT_PROVIDER, protocol, const char*, iotHubName, const char*, iotHubSuffix)
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , void, IoTHubTransport_Destroy, TRANSPORT_HANDLE, transportHlHandle)
-DECLARE_GLOBAL_MOCK_METHOD_2(CIoTHubHTTPMocks, , MESSAGE_BUS_RESULT, MessageBus_Publish, MESSAGE_BUS_HANDLE, bus, MESSAGE_HANDLE, message)
+DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , MESSAGE_BUS_RESULT, MessageBus_Publish, MESSAGE_BUS_HANDLE, bus, MODULE_HANDLE, source, MESSAGE_HANDLE, message)
 
 BEGIN_TEST_SUITE(iothubhttp_unittests)
 
     TEST_SUITE_INITIALIZE(TestClassInitialize)
     {
-        INITIALIZE_MEMORY_DEBUG(g_dllByDll);
+        TEST_INITIALIZE_MEMORY_DEBUG(g_dllByDll);
         g_testByTest = MicroMockCreateMutex();
         ASSERT_IS_NOT_NULL(g_testByTest);
 
@@ -638,7 +638,7 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
     TEST_SUITE_CLEANUP(TestClassCleanup)
     {
         MicroMockDestroyMutex(g_testByTest);
-        DEINITIALIZE_MEMORY_DEBUG(g_dllByDll);
+        TEST_DEINITIALIZE_MEMORY_DEBUG(g_dllByDll);
     }
 
     TEST_FUNCTION_INITIALIZE(TestMethodInitialize)
@@ -819,7 +819,7 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
         STRICT_EXPECTED_CALL(mocks, STRING_construct("theAwesomeSuffix.com"))
             .IgnoreArgument(1);
 
-		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create(HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
+		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create((IOTHUB_CLIENT_TRANSPORT_PROVIDER)HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
 			.IgnoreAllArguments();
 
         ///act
@@ -849,7 +849,7 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
         STRICT_EXPECTED_CALL(mocks, VECTOR_destroy(IGNORED_PTR_ARG))
             .IgnoreArgument(1);
 
-		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create(HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
+		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create((IOTHUB_CLIENT_TRANSPORT_PROVIDER)HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
 			.IgnoreAllArguments();
 		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Destroy(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
@@ -885,7 +885,7 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
         STRICT_EXPECTED_CALL(mocks, gballoc_free(IGNORED_PTR_ARG))
             .IgnoreArgument(1);
 
-		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create(HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
+		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create((IOTHUB_CLIENT_TRANSPORT_PROVIDER)HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
 			.IgnoreAllArguments();
 		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Destroy(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
@@ -922,7 +922,7 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
 		STRICT_EXPECTED_CALL(mocks, gballoc_free(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
 
-		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create(HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
+		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create((IOTHUB_CLIENT_TRANSPORT_PROVIDER)HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
 			.IgnoreAllArguments()
 			.SetFailReturn((TRANSPORT_HANDLE)NULL);
 
@@ -2532,8 +2532,8 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
 		STRICT_EXPECTED_CALL(mocks, Map_Add(MAP_HANDLE_VALID_1, GW_DEVICENAME_PROPERTY, "firstDevice"));
 		STRICT_EXPECTED_CALL(mocks, Message_Create(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
-		STRICT_EXPECTED_CALL(mocks, MessageBus_Publish(MESSAGE_BUS_HANDLE_VALID, IGNORED_PTR_ARG))
-			.IgnoreArgument(2);
+		STRICT_EXPECTED_CALL(mocks, MessageBus_Publish(MESSAGE_BUS_HANDLE_VALID, NULL, IGNORED_PTR_ARG))
+			.IgnoreArgument(3);
 		STRICT_EXPECTED_CALL(mocks, Message_Destroy(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
 
@@ -2585,8 +2585,8 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
 		STRICT_EXPECTED_CALL(mocks, Map_Add(MAP_HANDLE_VALID_1, GW_DEVICENAME_PROPERTY, "firstDevice"));
 		STRICT_EXPECTED_CALL(mocks, Message_Create(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
-		STRICT_EXPECTED_CALL(mocks, MessageBus_Publish(MESSAGE_BUS_HANDLE_VALID, IGNORED_PTR_ARG))
-			.IgnoreArgument(2);
+		STRICT_EXPECTED_CALL(mocks, MessageBus_Publish(MESSAGE_BUS_HANDLE_VALID, NULL, IGNORED_PTR_ARG))
+			.IgnoreArgument(3);
 		STRICT_EXPECTED_CALL(mocks, Message_Destroy(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
 
@@ -2630,8 +2630,8 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
 		STRICT_EXPECTED_CALL(mocks, Map_Add(MAP_HANDLE_VALID_1, GW_DEVICENAME_PROPERTY, "firstDevice"));
 		STRICT_EXPECTED_CALL(mocks, Message_Create(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
-		STRICT_EXPECTED_CALL(mocks, MessageBus_Publish(MESSAGE_BUS_HANDLE_VALID, IGNORED_PTR_ARG))
-			.IgnoreArgument(2)
+		STRICT_EXPECTED_CALL(mocks, MessageBus_Publish(MESSAGE_BUS_HANDLE_VALID, NULL, IGNORED_PTR_ARG))
+			.IgnoreArgument(3)
 			.SetFailReturn(MESSAGE_BUS_ERROR);
 		STRICT_EXPECTED_CALL(mocks, Message_Destroy(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);

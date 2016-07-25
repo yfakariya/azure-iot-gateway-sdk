@@ -10,7 +10,7 @@
 #include "azure_c_shared_utility/threadapi.h"
 #include "message.h"
 #include "messageproperties.h"
-#include "azure_c_shared_utility/iot_logging.h"
+#include "azure_c_shared_utility/xlogging.h"
 #include "azure_c_shared_utility/crt_abstractions.h"
 
 #include "module.h"
@@ -93,7 +93,7 @@ static int e2e_module_worker(void * user_data)
 			}
 			else
 			{
-				if (MessageBus_Publish(module_data->bus, newMessage) != MESSAGE_BUS_OK)
+				if (MessageBus_Publish(module_data->bus, (MODULE_HANDLE)module_data, newMessage) != MESSAGE_BUS_OK)
 				{
 					LogError("Failed to publish module data to the message bus.");
 				}

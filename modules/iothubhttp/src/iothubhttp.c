@@ -13,7 +13,7 @@
 #include "iothubtransporthttp.h"
 #include "iothub_message.h"
 #include "azure_c_shared_utility/vector.h"
-#include "azure_c_shared_utility/iot_logging.h"
+#include "azure_c_shared_utility/xlogging.h"
 #include "azure_c_shared_utility/strings.h"
 #include "messageproperties.h"
 #include "message_bus.h"
@@ -244,7 +244,7 @@ static IOTHUBMESSAGE_DISPOSITION_RESULT IoTHubHttp_ReceiveMessageCallback(IOTHUB
                         else
                         {
                             /*Codes_SRS_IOTHUBHTTP_17_018: [ IoTHubHttp_ReceiveMessageCallback shall call MessageBus_Publish with the new message and the busHandle. ]*/
-                            if (MessageBus_Publish(personality->busHandle, gatewayMsg) != MESSAGE_BUS_OK)
+                            if (MessageBus_Publish(personality->busHandle, NULL, gatewayMsg) != MESSAGE_BUS_OK)
                             {
                                 /*Codes_SRS_IOTHUBHTTP_17_019: [ If the message fails to publish, IoTHubHttp_ReceiveMessageCallback shall return IOTHUBMESSAGE_REJECTED. ]*/
                                 LogError("Failed to publish gateway message");
@@ -298,6 +298,7 @@ static PERSONALITY_PTR PERSONALITY_create(const char* deviceName, const char* de
             temp.iotHubSuffix = STRING_c_str(moduleHandleData->IoTHubSuffix);
             temp.protocol = HTTP_Protocol;
             temp.protocolGatewayHostName = NULL;
+            temp.deviceSasToken = NULL;
             if ((result->iothubHandle = IoTHubClient_CreateWithTransport(moduleHandleData->transportHandle, &temp)) == NULL)
             {
                 LogError("unable to IoTHubClient_CreateWithTransport");
