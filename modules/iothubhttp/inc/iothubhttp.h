@@ -15,6 +15,7 @@ typedef struct IOTHUBHTTP_CONFIG_TAG
 {
 	const char* IoTHubName;
 	const char* IoTHubSuffix;
+    unsigned int MinimumPollingTime;
 }IOTHUBHTTP_CONFIG; /*this needs to be passed to the Module_Create function*/
 
 MODULE_EXPORT const MODULE_APIS* MODULE_STATIC_GETAPIS(IOTHUBHTTP_MODULE)(void);

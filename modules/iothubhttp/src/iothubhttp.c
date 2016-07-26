@@ -10,6 +10,7 @@
 #include "iothubhttp.h"
 #include "iothub_client.h"
 #include "iothubtransport.h"
+#include "iothub_transport_ll.h"
 #include "iothubtransporthttp.h"
 #include "iothub_message.h"
 #include "azure_c_shared_utility/vector.h"
@@ -93,7 +94,15 @@ static MODULE_HANDLE IoTHubHttp_Create(MESSAGE_BUS_HANDLE busHandle, const void*
                     result = NULL;
                     LogError("VECTOR_create returned NULL");
                 }
-                else
+                else if (((const IOTHUBHTTP_CONFIG*)configuration)->MinimumPollingTime != 0 && HTTP_Protocol()->IoTHubTransport_SetOption(IoTHubTransport_GetLLTransport(result->transportHandle), "MinimumPollingTime", &((const IOTHUBHTTP_CONFIG*)configuration)->MinimumPollingTime) != IOTHUB_CLIENT_OK)
+                {
+                    IoTHubTransport_Destroy(result->transportHandle);
+                    VECTOR_destroy(result->personalities);
+                    free(result);
+                    result = NULL;
+                    LogError("IoTHubTransportHttp_SetOption returned Error");
+                }
+                else 
                 {
                     /*Codes_SRS_IOTHUBHTTP_02_028: [IoTHubHttp_Create shall create a copy of configuration->IoTHubSuffix.]*/
                     /*Codes_SRS_IOTHUBHTTP_02_029: [IoTHubHttp_Create shall create a copy of configuration->IoTHubName.]*/
@@ -421,11 +430,12 @@ static IOTHUB_MESSAGE_HANDLE IoTHubMessage_CreateFromGWMessage(MESSAGE_HANDLE me
                 /*add all the properties of the GW message to the IOTHUB message*/ /*with the exception*/
                 /*Codes_SRS_IOTHUBHTTP_02_018: [IoTHubHttp_Receive shall create a new IOTHUB_MESSAGE_HANDLE having the same content as the messageHandle and same properties with the exception of deviceName and deviceKey properties.]*/
                 if (
-                    (strcmp(keys[i], "deviceName") != 0) &&
-                    (strcmp(keys[i], "deviceKey") != 0)
+                    (strcmp(keys[i], SOURCE) != 0) &&
+                    (strcmp(keys[i], DEVICEKEY) != 0) &&
+                    (strcmp(keys[i], DEVICETOKEN) != 0) &&
+                    (strcmp(keys[i], DEVICENAME) != 0)
                     )
                 {
-                   
                     if (Map_AddOrUpdate(iothubMessageProperties, keys[i], values[i]) != MAP_OK)
                     {
                         /*Codes_SRS_IOTHUBHTTP_02_019: [If creating the IOTHUB_MESSAGE_HANDLE fails, then IoTHubHttp_Receive shall return.]*/

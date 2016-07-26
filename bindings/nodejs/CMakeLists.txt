@@ -151,4 +151,6 @@ target_include_directories(nodejs_binding_hl_static PUBLIC $ENV{NODE_INCLUDE})
 
 add_module_to_solution(nodejs_binding)
 
+if (NOT ${skip_unittests})
 add_subdirectory(tests)
+endif()
