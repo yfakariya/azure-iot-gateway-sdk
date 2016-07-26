@@ -296,6 +296,9 @@ public:
     MOCK_STATIC_METHOD_3(, void*, VECTOR_find_if, VECTOR_HANDLE, handle, PREDICATE_FUNCTION, pred, const void*, value)
     MOCK_METHOD_END(void*, BASEIMPLEMENTATION::VECTOR_find_if(handle, pred, value))
 
+    MOCK_STATIC_METHOD_3(, void, VECTOR_erase, VECTOR_HANDLE, handle, void*, elements, size_t, numElements)
+    MOCK_METHOD_END(void, BASEIMPLEMENTATION::VECTOR_erase(handle, elements, numElements))
+
     MOCK_STATIC_METHOD_1(, size_t, VECTOR_size, VECTOR_HANDLE, handle)
     MOCK_METHOD_END(size_t, BASEIMPLEMENTATION::VECTOR_size(handle))
 
@@ -591,6 +594,7 @@ DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , VECTOR_HANDLE, VECTOR_create, s
 DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , int, VECTOR_push_back, VECTOR_HANDLE, handle, const void*, elements, size_t, numElements)
 DECLARE_GLOBAL_MOCK_METHOD_2(CIoTHubHTTPMocks, , void*, VECTOR_element, VECTOR_HANDLE, handle, size_t, index)
 DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , void*, VECTOR_find_if, VECTOR_HANDLE, handle, PREDICATE_FUNCTION, pred, const void*, value)
+DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , void, VECTOR_erase, VECTOR_HANDLE, handle, void*, elements, size_t, numElements)
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , size_t, VECTOR_size, VECTOR_HANDLE, handle)
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , void, VECTOR_destroy, VECTOR_HANDLE, handle)
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , void, STRING_delete, STRING_HANDLE, s);
