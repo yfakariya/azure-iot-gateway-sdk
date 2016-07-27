@@ -67,8 +67,9 @@ static MODULE_HANDLE DotNET_HL_Create(MESSAGE_BUS_HANDLE busHandle, const void* 
 					}
 					else
 					{
-						const char* dotnet_module_args_string = json_object_get_string(root, "dotnet_module_args");
-						if (dotnet_module_args_string == NULL)
+                        JSON_Value* args = json_object_get_value(root, "dotnet_module_args"); // args is allowed to be NULL
+                        char* dotnet_module_args_string = json_serialize_to_string(args);
+                        if (dotnet_module_args_string == NULL)
 						{
 							/* Codes_SRS_DOTNET_HL_04_006: [ If the JSON object does not contain a value named "dotnet_module_args" then DotNET_HL_Create shall fail and return NULL. ] */
 							LogError("json_object_get_string failed for property 'dotnet_module_args'");
@@ -76,20 +77,22 @@ static MODULE_HANDLE DotNET_HL_Create(MESSAGE_BUS_HANDLE busHandle, const void* 
 						}
 						else
 						{
-								DOTNET_HOST_CONFIG dotNet_config;
-								dotNet_config.dotnet_module_path = dotnet_module_path_string;
-								dotNet_config.dotnet_module_entry_class = dotnet_module_entry_class_string;
-								dotNet_config.dotnet_module_args = dotnet_module_args_string;
+							DOTNET_HOST_CONFIG dotNet_config;
+							dotNet_config.dotnet_module_path = dotnet_module_path_string;
+							dotNet_config.dotnet_module_entry_class = dotnet_module_entry_class_string;
+							dotNet_config.dotnet_module_args = dotnet_module_args_string;
 
-								/* Codes_SRS_DOTNET_HL_04_007: [ DotNET_HL_Create shall pass busHandle and const char* configuration (dotnet_module_path, dotnet_module_entry_class and dotnet_module_args as string) to DotNET_Create. ] */
-								result = MODULE_STATIC_GETAPIS(DOTNET_HOST)()->Module_Create(busHandle, (const void*)&dotNet_config);
+							/* Codes_SRS_DOTNET_HL_04_007: [ DotNET_HL_Create shall pass busHandle and const char* configuration (dotnet_module_path, dotnet_module_entry_class and dotnet_module_args as string) to DotNET_Create. ] */
+							result = MODULE_STATIC_GETAPIS(DOTNET_HOST)()->Module_Create(busHandle, (const void*)&dotNet_config);
 
-								/* Codes_SRS_DOTNET_HL_04_008: [ If DotNET_Create succeeds then DotNET_HL_Create shall succeed and return a non-NULL value. ] */
-								if (result == NULL)
-								{
-									LogError("DotNET_Host_Create failed.");
-									/* Codes_SRS_DOTNET_HL_04_009: [ If DotNET_Create fails then DotNET_HL_Create shall fail and return NULL. ] */
-								}
+							/* Codes_SRS_DOTNET_HL_04_008: [ If DotNET_Create succeeds then DotNET_HL_Create shall succeed and return a non-NULL value. ] */
+							if (result == NULL)
+							{
+								LogError("DotNET_Host_Create failed.");
+								/* Codes_SRS_DOTNET_HL_04_009: [ If DotNET_Create fails then DotNET_HL_Create shall fail and return NULL. ] */
+							}
+
+                            free(dotnet_module_args_string);
 						}
 					}
 				}
