@@ -104,6 +104,7 @@ static size_t IoTHubHttp_receive_message_size;
 
 /*variable mock :(*/
 extern "C" const void* (*const HTTP_Protocol)(void) = (const void* (*)(void))((void*)11);
+static TRANSPORT_LL_HANDLE TRANSPORT_LL_HANDLE_VALID_1 = ((TRANSPORT_LL_HANDLE)(111));
 
 #define MESSAGE_BUS_HANDLE_VALID ((MESSAGE_BUS_HANDLE)(1))
 
@@ -570,6 +571,9 @@ public:
 		TRANSPORT_HANDLE result2 = (TRANSPORT_HANDLE)BASEIMPLEMENTATION::gballoc_malloc(1);
 	MOCK_METHOD_END(TRANSPORT_HANDLE, result2)
 
+    MOCK_STATIC_METHOD_1(, TRANSPORT_LL_HANDLE, IoTHubTransport_GetLLTransport, TRANSPORT_HANDLE, transportHandle)
+    MOCK_METHOD_END(TRANSPORT_LL_HANDLE, TRANSPORT_LL_HANDLE_VALID_1)
+
 	MOCK_STATIC_METHOD_1(, void, IoTHubTransport_Destroy, TRANSPORT_HANDLE, transportHlHandle)
 		BASEIMPLEMENTATION::gballoc_free(transportHlHandle);
 	MOCK_VOID_METHOD_END()
@@ -623,6 +627,7 @@ DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , const char*, IoTHubMessage_GetS
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , IOTHUBMESSAGE_CONTENT_TYPE, IoTHubMessage_GetContentType, IOTHUB_MESSAGE_HANDLE, iotHubMessageHandle)
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , void*, VECTOR_back, VECTOR_HANDLE, handle)
 DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , TRANSPORT_HANDLE, IoTHubTransport_Create, IOTHUB_CLIENT_TRANSPORT_PROVIDER, protocol, const char*, iotHubName, const char*, iotHubSuffix)
+DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , TRANSPORT_LL_HANDLE, IoTHubTransport_GetLLTransport, TRANSPORT_HANDLE, transportHlHandle)
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , void, IoTHubTransport_Destroy, TRANSPORT_HANDLE, transportHlHandle)
 DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , MESSAGE_BUS_RESULT, MessageBus_Publish, MESSAGE_BUS_HANDLE, bus, MODULE_HANDLE, source, MESSAGE_HANDLE, message)
 
@@ -2439,6 +2444,9 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
         STRICT_EXPECTED_CALL(mocks, ConstMap_GetValue(CONSTMAP_HANDLE_VALID_1, "deviceName"));
 
         STRICT_EXPECTED_CALL(mocks, ConstMap_GetValue(CONSTMAP_HANDLE_VALID_1, "deviceKey"))
+            .SetReturn((const char*)NULL);
+
+        STRICT_EXPECTED_CALL(mocks, ConstMap_GetValue(CONSTMAP_HANDLE_VALID_1, "deviceToken"))
             .SetReturn((const char*)NULL);
 
         ///act

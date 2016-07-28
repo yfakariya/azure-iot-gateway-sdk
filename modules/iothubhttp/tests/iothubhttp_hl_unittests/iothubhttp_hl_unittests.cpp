@@ -242,7 +242,9 @@ TEST_FUNCTION(IoTHubHttp_HL_Create_success)
 		.IgnoreArgument(1);
 	STRICT_EXPECTED_CALL(mocks, json_object_get_string(IGNORED_PTR_ARG, "IoTHubSuffix"))
 		.IgnoreArgument(1);
-	STRICT_EXPECTED_CALL(mocks, MODULE_STATIC_GETAPIS(IOTHUBHTTP_MODULE)());
+    STRICT_EXPECTED_CALL(mocks, json_object_get_string(IGNORED_PTR_ARG, "MinimumPollingTime"))
+        .IgnoreArgument(1);
+    STRICT_EXPECTED_CALL(mocks, MODULE_STATIC_GETAPIS(IOTHUBHTTP_MODULE)());
 	STRICT_EXPECTED_CALL(mocks, IoTHubHttp_Create(busHandle, IGNORED_PTR_ARG))
 		.IgnoreArgument(2);
 	STRICT_EXPECTED_CALL(mocks, json_value_free(IGNORED_PTR_ARG))
@@ -272,9 +274,11 @@ TEST_FUNCTION(IoTHubHttp_HL_Create_ll_module_null_returns_null)
 		.IgnoreArgument(1);
 	STRICT_EXPECTED_CALL(mocks, json_object_get_string(IGNORED_PTR_ARG, "IoTHubName"))
 		.IgnoreArgument(1);
-	STRICT_EXPECTED_CALL(mocks, json_object_get_string(IGNORED_PTR_ARG, "IoTHubSuffix"))
-		.IgnoreArgument(1);
-	STRICT_EXPECTED_CALL(mocks, MODULE_STATIC_GETAPIS(IOTHUBHTTP_MODULE)());
+    STRICT_EXPECTED_CALL(mocks, json_object_get_string(IGNORED_PTR_ARG, "IoTHubSuffix"))
+        .IgnoreArgument(1);
+    STRICT_EXPECTED_CALL(mocks, json_object_get_string(IGNORED_PTR_ARG, "MinimumPollingTime"))
+        .IgnoreArgument(1);
+    STRICT_EXPECTED_CALL(mocks, MODULE_STATIC_GETAPIS(IOTHUBHTTP_MODULE)());
 	STRICT_EXPECTED_CALL(mocks, IoTHubHttp_Create(busHandle, IGNORED_PTR_ARG))
 		.IgnoreArgument(2)
 		.SetFailReturn((MODULE_HANDLE)NULL);

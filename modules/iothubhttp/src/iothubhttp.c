@@ -430,7 +430,6 @@ static IOTHUB_MESSAGE_HANDLE IoTHubMessage_CreateFromGWMessage(MESSAGE_HANDLE me
                 /*add all the properties of the GW message to the IOTHUB message*/ /*with the exception*/
                 /*Codes_SRS_IOTHUBHTTP_02_018: [IoTHubHttp_Receive shall create a new IOTHUB_MESSAGE_HANDLE having the same content as the messageHandle and same properties with the exception of deviceName and deviceKey properties.]*/
                 if (
-                    (strcmp(keys[i], SOURCE) != 0) &&
                     (strcmp(keys[i], DEVICEKEY) != 0) &&
                     (strcmp(keys[i], DEVICETOKEN) != 0) &&
                     (strcmp(keys[i], DEVICENAME) != 0)
