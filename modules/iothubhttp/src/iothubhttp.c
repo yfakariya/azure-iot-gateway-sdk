@@ -428,7 +428,7 @@ static IOTHUB_MESSAGE_HANDLE IoTHubMessage_CreateFromGWMessage(MESSAGE_HANDLE me
             for (i = 0; i < nProperties; i++)
             {
                 /*add all the properties of the GW message to the IOTHUB message*/ /*with the exception*/
-                /*Codes_SRS_IOTHUBHTTP_02_018: [IoTHubHttp_Receive shall create a new IOTHUB_MESSAGE_HANDLE having the same content as the messageHandle and same properties with the exception of deviceName and deviceKey properties.]*/
+                /*Codes_SRS_IOTHUBHTTP_02_018: [IoTHubHttp_Receive shall create a new IOTHUB_MESSAGE_HANDLE having the same content as the messageHandle and same properties with the exception of deviceName, deviceToken, and deviceKey properties.]*/
                 if (
                     (strcmp(keys[i], DEVICEKEY) != 0) &&
                     (strcmp(keys[i], DEVICETOKEN) != 0) &&
@@ -495,7 +495,7 @@ static void IoTHubHttp_Receive(MODULE_HANDLE moduleHandle, MESSAGE_HANDLE messag
             }
             else
             {
-                /*Codes_SRS_IOTHUBHTTP_02_012: [If message properties do not contain a property called "deviceKey" having a non-NULL value then IoTHubHttp_Receive shall do nothing.]*/
+                /*Codes_SRS_IOTHUBHTTP_02_012: [If message properties do not contain a property called "deviceKey" or "deviceToken" having a non-NULL value then `IoTHubHttp_Receive` shall do nothing.]*/
                 const char* deviceKey = ConstMap_GetValue(properties, DEVICEKEY);
                 if (deviceKey == NULL)
                 {
@@ -503,11 +503,15 @@ static void IoTHubHttp_Receive(MODULE_HANDLE moduleHandle, MESSAGE_HANDLE messag
                     isToken = true;
                 }
                 
-                if (deviceKey != NULL)
+                if (deviceKey == NULL)
+                {
+                    LogError("Source was 'mapping', but message does not contain deviceKey or deviceToken-");
+                }
+                else
                 {
                     IOTHUBHTTP_HANDLE_DATA* moduleHandleData = moduleHandle;
-                    /*Codes_SRS_IOTHUBHTTP_02_013: [If the deviceName does not exist in the PERSONALITY collection then IoTHubHttp_Receive shall create a new IOTHUB_CLIENT_HANDLE by a call to IoTHubClient_CreateWithTransport.]*/
-                    
+                    /*Codes_SRS_IOTHUBHTTP_02_013: [If the deviceName does not exist in the `PERSONALITY` collection then `IoTHubHttp_Receive` shall create a new `PERSONALITY` containing `deviceName`, `deviceKey` or `deviceToken` , `isToken` and an `IOTHUB_CLIENT_HANDLE` (by a call to `IoTHubClient_CreateWithTransport`).]*/
+                    /*Codes_SRS_IOTHUBHTTP_20_002: [If an existing `PERSONALITY` has a device token, and it is different than the one passed, it shall be destroyed and a new one created]*/
                     PERSONALITY* whereIsIt = PERSONALITY_find_or_create(moduleHandleData, deviceName, deviceKey, isToken);
                     if (whereIsIt == NULL)
                     {

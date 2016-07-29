@@ -101,9 +101,6 @@ static void * IoTHubHttp_receive_message_userContext;
 static const char * IoTHubHttp_receive_message_content;
 static size_t IoTHubHttp_receive_message_size;
 
-
-/*variable mock :(*/
-extern "C" const void* (*const HTTP_Protocol)(void) = (const void* (*)(void))((void*)11);
 static TRANSPORT_LL_HANDLE TRANSPORT_LL_HANDLE_VALID_1 = ((TRANSPORT_LL_HANDLE)(111));
 
 #define MESSAGE_BUS_HANDLE_VALID ((MESSAGE_BUS_HANDLE)(1))
@@ -153,9 +150,10 @@ static pfModule_Create Module_Create = NULL; /*gets assigned in TEST_SUITE_INITI
 static pfModule_Destroy Module_Destroy = NULL; /*gets assigned in TEST_SUITE_INITIALIZE*/
 static pfModule_Receive Module_Receive = NULL; /*gets assigned in TEST_SUITE_INITIALIZE*/
 
-static const IOTHUBHTTP_CONFIG config_with_NULL_IoTHubName = {NULL, "devices.azure.com"};
-static const IOTHUBHTTP_CONFIG config_with_NULL_IoTHubSuffix = { "theIoTHub42", NULL};
-static const IOTHUBHTTP_CONFIG config_valid = { "theIoTHub42", "theAwesomeSuffix.com"};
+static const IOTHUBHTTP_CONFIG config_with_NULL_IoTHubName = {NULL, "devices.azure.com", 0};
+static const IOTHUBHTTP_CONFIG config_with_NULL_IoTHubSuffix = { "theIoTHub42", NULL, 0};
+static const IOTHUBHTTP_CONFIG config_valid = { "theIoTHub42", "theAwesomeSuffix.com", 0};
+static const IOTHUBHTTP_CONFIG config_valid_nonzero_MinimumPollTime = { "theIoTHub42", "theAwesomeSuffix.com", 1 };
 
 
 TYPED_MOCK_CLASS(CIoTHubHTTPMocks, CGlobalMock)
@@ -578,7 +576,8 @@ public:
 		BASEIMPLEMENTATION::gballoc_free(transportHlHandle);
 	MOCK_VOID_METHOD_END()
 
-
+    MOCK_STATIC_METHOD_3(, IOTHUB_CLIENT_RESULT, IoTHubTransport_SetOptionFunc, TRANSPORT_LL_HANDLE, handle, const char *, optionName, const void*, value)
+    MOCK_METHOD_END(IOTHUB_CLIENT_RESULT, IOTHUB_CLIENT_OK)
 
 	// bus
 	MOCK_STATIC_METHOD_3(, MESSAGE_BUS_RESULT, MessageBus_Publish, MESSAGE_BUS_HANDLE, bus, MODULE_HANDLE, source, MESSAGE_HANDLE, message)
@@ -616,7 +615,7 @@ DECLARE_GLOBAL_MOCK_METHOD_2(CIoTHubHTTPMocks, , const char*, ConstMap_GetValue,
 DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , MAP_RESULT, Map_AddOrUpdate, MAP_HANDLE, handle, const char*, key, const char*, value);
 DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , MAP_RESULT, Map_Add, MAP_HANDLE, handle, const char*, key, const char*, value);
 DECLARE_GLOBAL_MOCK_METHOD_4(CIoTHubHTTPMocks, , CONSTMAP_RESULT, ConstMap_GetInternals, CONSTMAP_HANDLE, handle, const char*const**, keys, const char*const**, values, size_t*, count)
-DECLARE_GLOBAL_MOCK_METHOD_4(CIoTHubHTTPMocks, ,IOTHUB_CLIENT_RESULT, IoTHubClient_SendEventAsync, IOTHUB_CLIENT_HANDLE, iotHubClientHandle, IOTHUB_MESSAGE_HANDLE, eventMessageHandle, IOTHUB_CLIENT_EVENT_CONFIRMATION_CALLBACK, eventConfirmationCallback, void*, userContextCallback)
+DECLARE_GLOBAL_MOCK_METHOD_4(CIoTHubHTTPMocks, , IOTHUB_CLIENT_RESULT, IoTHubClient_SendEventAsync, IOTHUB_CLIENT_HANDLE, iotHubClientHandle, IOTHUB_MESSAGE_HANDLE, eventMessageHandle, IOTHUB_CLIENT_EVENT_CONFIRMATION_CALLBACK, eventConfirmationCallback, void*, userContextCallback)
 DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , IOTHUB_CLIENT_RESULT, IoTHubClient_SetMessageCallback, IOTHUB_CLIENT_HANDLE, iotHubClientHandle, IOTHUB_CLIENT_MESSAGE_CALLBACK_ASYNC, messageCallback, void*, userContextCallback)
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , const CONSTBUFFER *, Message_GetContent, MESSAGE_HANDLE, message)
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , void, IoTHubMessage_Destroy, IOTHUB_MESSAGE_HANDLE, iotHubMessageHandle)
@@ -629,7 +628,20 @@ DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , void*, VECTOR_back, VECTOR_HAND
 DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , TRANSPORT_HANDLE, IoTHubTransport_Create, IOTHUB_CLIENT_TRANSPORT_PROVIDER, protocol, const char*, iotHubName, const char*, iotHubSuffix)
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , TRANSPORT_LL_HANDLE, IoTHubTransport_GetLLTransport, TRANSPORT_HANDLE, transportHlHandle)
 DECLARE_GLOBAL_MOCK_METHOD_1(CIoTHubHTTPMocks, , void, IoTHubTransport_Destroy, TRANSPORT_HANDLE, transportHlHandle)
+DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , IOTHUB_CLIENT_RESULT, IoTHubTransport_SetOptionFunc, TRANSPORT_LL_HANDLE, handle, const char *, optionName, const void*, value)
 DECLARE_GLOBAL_MOCK_METHOD_3(CIoTHubHTTPMocks, , MESSAGE_BUS_RESULT, MessageBus_Publish, MESSAGE_BUS_HANDLE, bus, MODULE_HANDLE, source, MESSAGE_HANDLE, message)
+
+
+static TRANSPORT_PROVIDER HTTP_Protocol_Mock = {
+    NULL,
+    IoTHubTransport_SetOptionFunc
+};
+
+extern "C" const TRANSPORT_PROVIDER* HTTP_Protocol(void)
+{
+    return &HTTP_Protocol_Mock;
+}
+
 
 BEGIN_TEST_SUITE(iothubhttp_unittests)
 
@@ -828,7 +840,7 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
         STRICT_EXPECTED_CALL(mocks, STRING_construct("theAwesomeSuffix.com"))
             .IgnoreArgument(1);
 
-		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create((IOTHUB_CLIENT_TRANSPORT_PROVIDER)HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
+		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create(HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
 			.IgnoreAllArguments();
 
         ///act
@@ -836,6 +848,83 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
 
         ///assert
         ASSERT_IS_NOT_NULL(module);
+        mocks.AssertActualAndExpectedCalls();
+
+        ///cleanup
+        Module_Destroy(module);
+    }
+
+    /*Tests_SRS_IOTHUBHTTP_20_001: [If minimum polling time is not 0, `IoTHubHttp_Create` shall configure the http transport with the minimum polling time calling IoTHubTransport_SetOption on the transport provider] */
+    TEST_FUNCTION(IoTHubHttp_Create_succeeds_with_MinimumPollingTime_not_zero)
+    {
+        ///arrange
+        CIoTHubHTTPMocks mocks;
+
+        STRICT_EXPECTED_CALL(mocks, gballoc_malloc(IGNORED_NUM_ARG))
+            .IgnoreArgument(1);
+
+        STRICT_EXPECTED_CALL(mocks, VECTOR_create(IGNORED_NUM_ARG))
+            .IgnoreArgument(1);
+
+        STRICT_EXPECTED_CALL(mocks, STRING_construct("theIoTHub42"))
+            .IgnoreArgument(1);
+
+        STRICT_EXPECTED_CALL(mocks, STRING_construct("theAwesomeSuffix.com"))
+            .IgnoreArgument(1);
+
+        STRICT_EXPECTED_CALL(mocks, IoTHubTransport_GetLLTransport(IGNORED_PTR_ARG))
+            .IgnoreArgument(1);
+
+        STRICT_EXPECTED_CALL(mocks, IoTHubTransport_SetOptionFunc(IGNORED_PTR_ARG, "MinimumPollingTime", IGNORED_PTR_ARG))
+            .IgnoreAllArguments();
+
+        STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create(HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
+            .IgnoreAllArguments();
+
+        ///act
+        auto module = Module_Create(MESSAGE_BUS_HANDLE_VALID, &config_valid_nonzero_MinimumPollTime);
+
+        ///assert
+        ASSERT_IS_NOT_NULL(module);
+        mocks.AssertActualAndExpectedCalls();
+
+        ///cleanup
+        Module_Destroy(module);
+    }
+
+    /*Tests_SRS_IOTHUBHTTP_20_001: [If minimum polling time is not 0, `IoTHubHttp_Create` shall configure the http transport with the minimum polling time calling IoTHubTransport_SetOption on the transport provider] */
+    TEST_FUNCTION(IoTHubHttp_Create_fails_when_SetOption_fails)
+    {
+        ///arrange
+        CIoTHubHTTPMocks mocks;
+
+        STRICT_EXPECTED_CALL(mocks, gballoc_malloc(IGNORED_NUM_ARG))
+            .IgnoreArgument(1);
+
+        STRICT_EXPECTED_CALL(mocks, VECTOR_create(IGNORED_NUM_ARG))
+            .IgnoreArgument(1);
+
+        STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create(HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
+            .IgnoreAllArguments();
+
+        STRICT_EXPECTED_CALL(mocks, IoTHubTransport_GetLLTransport(IGNORED_PTR_ARG))
+            .IgnoreArgument(1);
+
+        STRICT_EXPECTED_CALL(mocks, IoTHubTransport_SetOptionFunc(IGNORED_PTR_ARG, "MinimumPollingTime", IGNORED_PTR_ARG))
+            .IgnoreAllArguments().SetFailReturn((IOTHUB_CLIENT_RESULT)IOTHUB_CLIENT_ERROR);
+        
+        STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Destroy(IGNORED_PTR_ARG))
+            .IgnoreArgument(1);
+        STRICT_EXPECTED_CALL(mocks, VECTOR_destroy(IGNORED_PTR_ARG))
+            .IgnoreArgument(1);
+        STRICT_EXPECTED_CALL(mocks, gballoc_free(IGNORED_PTR_ARG))
+            .IgnoreArgument(1);
+
+        ///act
+        auto module = Module_Create(MESSAGE_BUS_HANDLE_VALID, &config_valid_nonzero_MinimumPollTime);
+
+        ///assert
+        ASSERT_IS_NULL(module);
         mocks.AssertActualAndExpectedCalls();
 
         ///cleanup
@@ -858,7 +947,7 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
         STRICT_EXPECTED_CALL(mocks, VECTOR_destroy(IGNORED_PTR_ARG))
             .IgnoreArgument(1);
 
-		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create((IOTHUB_CLIENT_TRANSPORT_PROVIDER)HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
+		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create(HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
 			.IgnoreAllArguments();
 		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Destroy(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
@@ -894,7 +983,7 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
         STRICT_EXPECTED_CALL(mocks, gballoc_free(IGNORED_PTR_ARG))
             .IgnoreArgument(1);
 
-		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create((IOTHUB_CLIENT_TRANSPORT_PROVIDER)HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
+		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create(HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
 			.IgnoreAllArguments();
 		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Destroy(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
@@ -931,7 +1020,7 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
 		STRICT_EXPECTED_CALL(mocks, gballoc_free(IGNORED_PTR_ARG))
 			.IgnoreArgument(1);
 
-		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create((IOTHUB_CLIENT_TRANSPORT_PROVIDER)HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
+		STRICT_EXPECTED_CALL(mocks, IoTHubTransport_Create(HTTP_Protocol, "theIoTHub42", "theAwesomeSuffix.com"))
 			.IgnoreAllArguments()
 			.SetFailReturn((TRANSPORT_HANDLE)NULL);
 
@@ -1247,9 +1336,10 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
 
     }
 
-    /*Tests_SRS_IOTHUBHTTP_02_013: [If the deviceName does not exist in the PERSONALITY collection then IoTHubHttp_Receive shall create a new IOTHUB_CLIENT_HANDLE by a call to IoTHubClient_CreateWithTransport.]*/
-	//Tests_SRS_IOTHUBHTTP_17_003: [ If a new PERSONALITY is created, then the IoTHubClient will be set to receive messages, by calling IoTHubClient_SetMessageCallback with callback function IoTHubHttp_ReceiveMessageCallback and PERSONALITY as context.]
-    /*Tests_SRS_IOTHUBHTTP_02_018: [IoTHubHttp_Receive shall create a new IOTHUB_MESSAGE_HANDLE having the same content as the messageHandle and same properties with the exception of deviceName and deviceKey properties.]*/
+    /*Tests_SRS_IOTHUBHTTP_02_013: [If the deviceName does not exist in the `PERSONALITY` collection then `IoTHubHttp_Receive` shall create a new `PERSONALITY` containing `deviceName`, `deviceKey` or `deviceToken` , `isToken` and an `IOTHUB_CLIENT_HANDLE` (by a call to `IoTHubClient_CreateWithTransport`).]*/
+    /*Tests_SRS_IOTHUBHTTP_17_003: [If a new `PERSONALITY` is created, then the IoTHubClient will be set to receive messages, by calling `IoTHubClient_SetMessageCallback` with callback function `IoTHubHttp_ReceiveMessageCallback` and `PERSONALITY` as context..]*/
+    /*Tests_SRS_IOTHUBHTTP_02_018: [IoTHubHttp_Receive shall create a new IOTHUB_MESSAGE_HANDLE having the same content as the messageHandle and same properties with the exception of deviceName, deviceToken and deviceKey properties.]*/
+    /*Tests_SRS_IOTHUBHTTP_20_002: [If an existing `PERSONALITY` has a device token, and it is different than the one passed, it shall be destroyed and a new one created.] */
     /*Tests_SRS_IOTHUBHTTP_02_020: [IoTHubHttp_Receive shall call IoTHubClient_SendEventAsync passing the IOTHUB_MESSAGE_HANDLE.]*/
     /*Tests_SRS_IOTHUBHTTP_02_022: [IoTHubHttp_Receive shall return.]*/
     TEST_FUNCTION(IoTHubHttp_Receive_succeeds)
@@ -1447,8 +1537,8 @@ BEGIN_TEST_SUITE(iothubhttp_unittests)
 
     }
 
-    /*Tests_SRS_IOTHUBHTTP_02_013: [If the deviceName does not exist in the PERSONALITY collection then IoTHubHttp_Receive shall create a new IOTHUB_CLIENT_HANDLE by a call to IoTHubClient_CreateWithTransport.]*/
-    /*Tests_SRS_IOTHUBHTTP_02_018: [IoTHubHttp_Receive shall create a new IOTHUB_MESSAGE_HANDLE having the same content as the messageHandle and same properties with the exception of deviceName and deviceKey properties.]*/
+    /*Tests_SRS_IOTHUBHTTP_02_013: [If the deviceName does not exist in the `PERSONALITY` collection then `IoTHubHttp_Receive` shall create a new `PERSONALITY` containing `deviceName`, `deviceKey` or `deviceToken` , `isToken` and an `IOTHUB_CLIENT_HANDLE` (by a call to `IoTHubClient_CreateWithTransport`).]*/
+    /*Tests_SRS_IOTHUBHTTP_02_018: [IoTHubHttp_Receive shall create a new IOTHUB_MESSAGE_HANDLE having the same content as the messageHandle and same properties with the exception of deviceName, deviceToken and deviceKey properties.]*/
     /*Tests_SRS_IOTHUBHTTP_02_020: [IoTHubHttp_Receive shall call IoTHubClient_SendEventAsync passing the IOTHUB_MESSAGE_HANDLE.]*/
     /*Tests_SRS_IOTHUBHTTP_02_022: [IoTHubHttp_Receive shall return.]*/
     TEST_FUNCTION(IoTHubHttp_Receive_after_Receive_a_new_device_succeeds)

@@ -21,7 +21,8 @@ create function to  interpret the serialized JSON module arguments.
 ```json
 {
     "IoTHubName" : "<the name of the IoTHub>",
-    "IoTHubSuffix" : "<the suffix used in generating the host name>"
+    "IoTHubSuffix" : "<the suffix used in generating the host name>",
+    "MinimumPollingTime" : "Interval between C2D polling calls.  0 == SDK default"
 }
 ```
 
@@ -50,6 +51,8 @@ NULL. **]**
 **SRS_IOTHUBHTTP_HL_17_006: [** If the JSON object does not contain a value named "IoTHubName" then `IoTHubHttp_HL_Create` shall fail and return NULL. **]**
 
 **SRS_IOTHUBHTTP_HL_17_007: [** If the JSON object does not contain a value named "IoTHubSuffix" then `IoTHubHttp_HL_Create` shall fail and return NULL. **]**
+
+**SRS_IOTHUBHTTP_HL_20_015: [** If the JSON object does not contain a value named "MinimumPollingTime" or the value is not an integer or the value is 0 then `IoTHubHttp_HL_Create` log an error and continue. **]**
 
 **SRS_IOTHUBHTTP_HL_17_008: [** `IoTHubHttp_HL_Create` shall invoke the IoTHubHttp Module's create, using the busHandle, IotHubName, and IoTHubSuffix. **]**
 

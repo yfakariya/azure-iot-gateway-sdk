@@ -18,7 +18,6 @@
 
 static MODULE_HANDLE IoTHubHttp_HL_Create(MESSAGE_BUS_HANDLE busHandle, const void* configuration)
 {
-    const char* ptr;
     MODULE_HANDLE *result;
     if ((busHandle == NULL) || (configuration == NULL))
     {
@@ -64,18 +63,20 @@ static MODULE_HANDLE IoTHubHttp_HL_Create(MESSAGE_BUS_HANDLE busHandle, const vo
                 }
                 else
                 {
-                    /*Codes_SRS_IOTHUBHTTP_HL_17_008: [ IoTHubHttp_HL_Create shall invoke iothubhttp Module's create, using the busHandle, IotHubName, and IoTHubSuffix. ]*/
+                    const char* MinimumPollingTimeString;
                     IOTHUBHTTP_CONFIG llConfiguration;
                     llConfiguration.IoTHubName = IoTHubName;
                     llConfiguration.IoTHubSuffix = IoTHubSuffix;
                     llConfiguration.MinimumPollingTime = 0;
 
-                    ptr = json_object_get_string(obj, MINIMUMPOLLINGTIME);
-                    if (ptr != NULL && (llConfiguration.MinimumPollingTime = atoi(ptr)) == 0)
+                    /*Codes_SRS_IOTHUBHTTP_HL_20_015: [ If the JSON object does not contain a value named "MinimumPollingTime" or the value is not an integer or the value is 0 then `IoTHubHttp_HL_Create` log an error and continue. ]*/
+                    MinimumPollingTimeString = json_object_get_string(obj, MINIMUMPOLLINGTIME);
+                    if (MinimumPollingTimeString != NULL && (llConfiguration.MinimumPollingTime = (unsigned int)atoi(MinimumPollingTimeString)) == 0)
                     {
-                        LogError("%s configuration option has invalid value %s, using default.", MINIMUMPOLLINGTIME, ptr);
+                        LogError("%s configuration option has invalid value %s, default will be used.", MINIMUMPOLLINGTIME, MinimumPollingTimeString);
                     }
 
+                    /*Codes_SRS_IOTHUBHTTP_HL_17_008: [ IoTHubHttp_HL_Create shall invoke iothubhttp Module's create, using the busHandle, IotHubName, and IoTHubSuffix. ]*/
                     /*Codes_SRS_IOTHUBHTTP_HL_17_009: [ When the lower layer IoTHubHttp create succeeds, IoTHubHttp_HL_Create shall succeed and return a non-NULL value. ]*/
                     /*Codes_SRS_IOTHUBHTTP_HL_17_010: [ If the lower layer IoTHubHttp create fails, IoTHubHttp_HL_Create shall fail and return NULL. ]*/
                     result = MODULE_STATIC_GETAPIS(IOTHUBHTTP_MODULE)()->Module_Create(busHandle, &llConfiguration);

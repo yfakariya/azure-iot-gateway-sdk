@@ -15,6 +15,7 @@ by the following properties that must exist:
 >| source       | The module only processes message that have source set to "mapping".         |
 >| deviceName   | The deviceName as registered with IoTHub                                     |
 >| deviceKey    | The key as registered with IoTHub                                            |
+>| deviceToken  | The shared access token of the device as alternative to the key			   |
 
 The module shall dynamically create instances of IoTHubClient (one per each device). The module shall use HTTP 
 protocol for connections.
@@ -23,7 +24,7 @@ protocol for connections.
 Upon reception of a message from the IoTHub, this module will publish a message to the bus.  The published message will have the following properties:
 >| PropertyName  | Description                                                                         |
 >| ------------- | ----------------------------------------------------------------------------------- |
->| source        | "IoTHubHTTP"                                                                    |
+>| source        | "IoTHubHTTP"                                                                        |
 >| deviceName    | The receiver's deviceName, as registered with IoTHub                                |
 >| * (all other) | All other properties of the received message will be added to the published message |
 
@@ -36,6 +37,7 @@ typedef struct IOTHUBHTTP_CONFIG_TAG
 {
 	const char* IoTHubName; /*the name of the IoTHub*/
 	const char* IoTHubSuffix; /*the suffix used in generating the host name*/
+	unsigned int MinimumPollingTime; /*The HTTP polling interval, if 0, the default SDK value is used, right now 25 minutes */
 }IOTHUBHTTP_CONFIG; /*this needs to be passed to the Module_Create function*/
 ```
 
@@ -60,11 +62,11 @@ IoTHubHttp shall name the triplet of deviceName, deviceKey and IOTHUB_CLIENT_HAN
 
 **SRS_IOTHUBHTTP_02_006: [**`IoTHubHttp_Create` shall create an empty `VECTOR` containing pointers to `PERSONALITY`s.**]** 
 
-**SRS_IOTHUBHTTP_02_007: [**If creating the `VECTOR` fails
-then `IoTHubHttp_Create` shall fail and return NULL.**]**
+**SRS_IOTHUBHTTP_02_007: [**If creating the `VECTOR` fails then `IoTHubHttp_Create` shall fail and return NULL.**]**
 **SRS_IOTHUBHTTP_02_028: [**`IoTHubHttp_Create` shall create a copy of `configuration->IoTHubName`.**]**
 **SRS_IOTHUBHTTP_02_029: [**`IoTHubHttp_Create` shall create a copy of `configuration->IoTHubSuffix`.**]**
 **SRS_IOTHUBHTTP_17_004: [** `IoTHubHttp_Create` shall store the busHandle. **]**
+**SRS_IOTHUBHTTP_20_001: [** If minimum polling time is not 0, `IoTHubHttp_Create` shall configure the http transport with the minimum polling time calling IoTHubTransport_SetOption on the transport provider**]**
 **SRS_IOTHUBHTTP_02_027: [**When `IoTHubHttp_Create` encounters an internal failure it shall fail and return NULL.**]**
 
 **SRS_IOTHUBHTTP_02_008: [**Otherwise, `IoTHubHttp_Create` shall return a non-NULL handle.**]**
@@ -76,18 +78,20 @@ MODULE_HANDLE IoTHubHttp_Receive(MODULE_HANDLE moduleHandle, MESSAGE_HANDLE mess
 **SRS_IOTHUBHTTP_02_009: [**If `moduleHandle` or `messageHandle` is NULL then `IoTHubHttp_Receive` shall do nothing.**]**
 **SRS_IOTHUBHTTP_02_010: [**If message properties do not contain a property called "source" having the value set to "mapping" then `IoTHubHttp_Receive` shall do nothing.**]**
 **SRS_IOTHUBHTTP_02_011: [**If message properties do not contain a property called "deviceName" having a non-NULL value then `IoTHubHttp_Receive` shall do nothing.**]**
-**SRS_IOTHUBHTTP_02_012: [**If message properties do not contain a property called "deviceKey" having a non-NULL value then `IoTHubHttp_Receive` shall do nothing.**]**
+**SRS_IOTHUBHTTP_02_012: [**If message properties do not contain a property called "deviceKey" or "deviceToken" having a non-NULL 
+value then `IoTHubHttp_Receive` shall do nothing.**]**
 
 **SRS_IOTHUBHTTP_02_013: [**If the deviceName does not exist in the `PERSONALITY` collection then `IoTHubHttp_Receive` shall create a new 
-`PERSONALITY` containing `deviceName`, `deviceKey` and an `IOTHUB_CLIENT_HANDLE` (by a call to `IoTHubClient_CreateWithTransport`).**]**
-**SRS_IOTHUBHTTP_17_003: [** If a new `PERSONALITY` is created, then the IoTHubClient will be set to receive messages, by calling `IoTHubClient_SetMessageCallback` with callback function `IoTHubHttp_ReceiveMessageCallback` and `PERSONALITY` as context.**]**   
+`PERSONALITY` containing `deviceName`, `deviceKey` or `deviceToken` , `isToken` and an `IOTHUB_CLIENT_HANDLE` (by a call to `IoTHubClient_CreateWithTransport`).**]**
+**SRS_IOTHUBHTTP_17_003: [**If a new `PERSONALITY` is created, then the IoTHubClient will be set to receive messages, by calling `IoTHubClient_SetMessageCallback` with callback function `IoTHubHttp_ReceiveMessageCallback` and `PERSONALITY` as context.**]**   
+**SRS_IOTHUBHTTP_20_002: [**If an existing `PERSONALITY` has a device token, and it is different than the one passed, it shall be destroyed and a new one created.**]** 
 **SRS_IOTHUBHTTP_02_014: [**If creating the `PERSONALITY` fails then `IoTHubHttp_Receive` shall return.**]** 
 **SRS_IOTHUBHTTP_02_016: [**If adding the new triplet fails, then `IoTHubClient_Create` shall return.**]** 
 **SRS_IOTHUBHTTP_02_017: [**If the deviceName exists in the `PERSONALITY` collection then `IoTHubHttp_Receive` shall not 
 create a new IOTHUB_CLIENT_HANDLE.**]**
 
 **SRS_IOTHUBHTTP_02_018: [**`IoTHubHttp_Receive` shall create a new IOTHUB_MESSAGE_HANDLE having the same content as the `messageHandle` and
-same properties with the exception of deviceName and deviceKey properties.**]**
+same properties with the exception of deviceName and deviceToken and deviceKey properties.**]**
 
 **SRS_IOTHUBHTTP_02_019: [**If creating the IOTHUB_MESSAGE_HANDLE fails, then `IoTHubHttp_Receive` shall return.**]**
 

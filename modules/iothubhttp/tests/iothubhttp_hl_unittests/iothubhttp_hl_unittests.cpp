@@ -119,6 +119,10 @@ public:
 	{
 		result2 = "aHubName";
 	}
+    else if (strcmp(name, "MinimumPollingTime") == 0)
+    {
+        result2 = "5";
+    }
 	else
 	{
 		result2 = NULL;
@@ -320,6 +324,41 @@ TEST_FUNCTION(IoTHubHttp_HL_Create_IoTHubSuffix_not_found_returns_null)
 	ASSERT_IS_NULL(result);
 
 	///cleanup
+}
+
+//Tests_SRS_IOTHUBHTTP_HL_20_015: [ If the JSON object does not contain a value named "MinimumPollingTime" or the value is not an integer or the value is 0 then `IoTHubHttp_HL_Create` log an error and continue. ]
+TEST_FUNCTION(IoTHubHttp_HL_Create_MinimumPollingTime_not_found_succeeds)
+{
+    ///arrange
+    CIoTHubHTTPHLMocks mocks;
+    const char * validJsonString = "calling it valid makes it so";
+    MESSAGE_BUS_HANDLE busHandle = (MESSAGE_BUS_HANDLE)0x42;
+
+    STRICT_EXPECTED_CALL(mocks, json_parse_string(validJsonString));
+    STRICT_EXPECTED_CALL(mocks, json_value_get_object(IGNORED_PTR_ARG))
+        .IgnoreArgument(1);
+    STRICT_EXPECTED_CALL(mocks, json_object_get_string(IGNORED_PTR_ARG, "IoTHubName"))
+        .IgnoreArgument(1);
+    STRICT_EXPECTED_CALL(mocks, json_object_get_string(IGNORED_PTR_ARG, "IoTHubSuffix"))
+        .IgnoreArgument(1);
+    STRICT_EXPECTED_CALL(mocks, json_object_get_string(IGNORED_PTR_ARG, "MinimumPollingTime"))
+        .IgnoreArgument(1)
+        .SetFailReturn((const char *)NULL);
+    STRICT_EXPECTED_CALL(mocks, MODULE_STATIC_GETAPIS(IOTHUBHTTP_MODULE)());
+    STRICT_EXPECTED_CALL(mocks, IoTHubHttp_Create(busHandle, IGNORED_PTR_ARG))
+        .IgnoreArgument(2);
+    STRICT_EXPECTED_CALL(mocks, json_value_free(IGNORED_PTR_ARG))
+        .IgnoreArgument(1);
+
+    ///act
+    auto result = Module_Create(busHandle, validJsonString);
+    ///assert
+
+    ASSERT_IS_NOT_NULL(result);
+    mocks.AssertActualAndExpectedCalls();
+
+    ///cleanup
+    Module_Destroy(result);
 }
 
 //Tests_SRS_IOTHUBHTTP_HL_17_006: [ If the JSON object does not contain a value named "IoTHubName" then IoTHubHttp_HL_Create shall fail and return NULL. ]
