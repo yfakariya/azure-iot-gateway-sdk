@@ -23,36 +23,27 @@
 #endif
 
 #include "dotnet.h"
-	
+
 #include <new>
 
-#ifndef DOTNET_CORE
 #include <metahost.h>
 
 #include <atlbase.h>
-#else
-// TODO:
-#endif // DOTNET_CORE
 
 
 #define DEFAULT_CLR_VERSION L"v4.0.30319"
-// TODO: MODIFY
-#define DEFAULT_CORE_CLR_VERSION L"v1.0.1539"
 #define AZUREIOTGATEWAYASSEMBLYNAME L"Microsoft.Azure.IoT.Gateway"
 #define AZUREIOTGATEWAY_MESSAGEBUS_CLASSNAME L"Microsoft.Azure.IoT.Gateway.MessageBus"
 #define AZUREIOTGATEWAY_MESSAGE_CLASSNAME L"Microsoft.Azure.IoT.Gateway.Message"
 
 
 
-#ifndef DOTNET_CORE
+
 // Import mscorlib.tlb (Microsoft Common Language Runtime Class Library).
 #import "mscorlib.tlb" raw_interfaces_only				\
     high_property_prefixes("_get","_put","_putref")		\
     rename("ReportEvent", "InteropServices_ReportEvent")
 using namespace mscorlib;
-#else
-#include "coreclrhost.h"
-#endif // DOTNET_CORE
 
 struct DOTNET_HOST_HANDLE_DATA
 {
@@ -64,14 +55,9 @@ struct DOTNET_HOST_HANDLE_DATA
     MESSAGE_BUS_HANDLE          bus;
 
 	variant_t                   vtClientModuleObject;
-#ifndef DOTNET_CORE
 	CComPtr<ICLRMetaHost>       spMetaHost;
 	CComPtr<ICLRRuntimeInfo>    spRuntimeInfo;
 	CComPtr<ICorRuntimeHost>    spCorRuntimeHost;
-#else
-	void** hostHandle;
-	unsinged int domainId;
-#endif // DOTNET_CORE
 	_TypePtr                    spClientModuleType;
 	_AssemblyPtr                spAzureIoTGatewayAssembly;
 
