@@ -11,6 +11,8 @@ log_dir=$build_root
 skip_unittests=OFF
 run_e2e_tests=OFF
 run_valgrind=0
+enable_dotnet_binding=OFF
+enable_dotnet_binding_pinvoke=OFF
 enable_java_binding=OFF
 enable_nodejs_binding=OFF
 toolchainfile=
@@ -22,22 +24,25 @@ usage ()
 {
     echo "build.sh [options]"
     echo "options"
-    echo " -x,  --xtrace                 Print a trace of each command"
-    echo " -c,  --clean                  Remove previous build artifacts"
-    echo " -cl, --compileoption <value>  Specify a gcc compile option"
+    echo " -x,  --xtrace                     Print a trace of each command"
+    echo " -c,  --clean                      Remove previous build artifacts"
+    echo " -cl, --compileoption <value>      Specify a gcc compile option"
     echo "   Example: -cl -O1 -cl ..."
-    echo " -rv, --run-valgrind           Execute ctest with valgrind"
-    echo " --toolchain-file <file>       Pass CMake a toolchain file for cross-compiling"
-    echo " --skip-unittests              Do not build/run unit tests"
-    echo " --run-e2e-tests               Build/run end-to-end tests"
-    echo " --enable-java-binding         Build the Java binding"
-    echo "                               (JAVA_HOME must be defined in your environment)"
-    echo " --enable-nodejs-binding       Build Node.js binding"
-    echo "                               (NODE_INCLUDE, NODE_LIB must be defined)"
-    echo " --disable-ble-module          Do not build the BLE module"
-    echo " --system-deps-path            Search for dependencies in a system-level location,"
-    echo "                               e.g. /usr/local, and install if not found. When this"
-    echo "                               option is omitted the path is $local_install."
+    echo " -rv, --run-valgrind               Execute ctest with valgrind"
+    echo " --toolchain-file <file>           Pass CMake a toolchain file for cross-compiling"
+    echo " --skip-unittests                  Do not build/run unit tests"
+    echo " --run-e2e-tests                   Build/run end-to-end tests"
+    echo " --enable-dotnet-binding           Build the .NET Core binding
+    echo " --enable-dotnet-binding-pinvoke   Enable P/Invoke from .NET Core for
+    echo "                                   managed gateway mangement API
+    echo " --enable-java-binding             Build the Java binding"
+    echo "                                   (JAVA_HOME must be defined in your environment)"
+    echo " --enable-nodejs-binding           Build Node.js binding"
+    echo "                                   (NODE_INCLUDE, NODE_LIB must be defined)"
+    echo " --disable-ble-module              Do not build the BLE module"
+    echo " --system-deps-path                Search for dependencies in a system-level location,"
+    echo "                                   e.g. /usr/local, and install if not found. When this"
+    echo "                                   option is omitted the path is $local_install."
     exit 1
 }
 
@@ -67,6 +72,8 @@ process_args ()
               "--run-e2e-tests" ) run_e2e_tests=ON;;
               "-cl" | "--compileoption" ) save_next_arg=1;;
               "-rv" | "--run-valgrind" ) run_valgrind=1;;
+              "--enable-dotnet-binding" ) enable_dotnet_binding=ON;;
+              "--enable-dotnet-binding-pinvoke" ) enable_dotnet_binding_pinvoke=ON;;
               "--enable-java-binding" ) enable_java_binding=ON;;
               "--enable-nodejs-binding" ) enable_nodejs_binding=ON;;
               "--disable-ble-module" ) enable_ble_module=OFF;;
@@ -126,6 +133,9 @@ cmake $toolchainfile \
       -DCMAKE_BUILD_TYPE=Debug \
       -Dskip_unittests:BOOL=$skip_unittests \
       -Drun_e2e_tests:BOOL=$run_e2e_tests \
+      -Denable_dotnet_binding:BOOL=$enable_dotnet_binding \
+      -Ddotnet_binding_dotnet_core:BOOL=ON \
+      -Denable_dotnet_binding_pinvoke:BOOL=$enable_dotnet_binding_pinvoke \
       -Denable_java_binding:BOOL=$enable_java_binding \
       -Denable_nodejs_binding:BOOL=$enable_nodejs_binding \
       -Denable_ble_module:BOOL=$enable_ble_module \

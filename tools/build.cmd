@@ -25,6 +25,7 @@ set build-platform=Win32
 set CMAKE_skip_unittests=OFF
 set CMAKE_run_e2e_tests=OFF
 set CMAKE_enable_dotnet_binding=OFF
+set dotnet_binding_dotnet_core=OFF
 set enable-java-binding=OFF
 set enable_nodejs_binding=OFF
 set CMAKE_enable_ble_module=ON
@@ -37,6 +38,7 @@ if "%1" equ "--platform" goto arg-build-platform
 if "%1" equ "--skip-unittests" goto arg-skip-unittests
 if "%1" equ "--run-e2e-tests" goto arg-run-e2e-tests
 if "%1" equ "--enable-dotnet-binding" goto arg-enable-dotnet-binding
+if "%1" equ "--enable-dotnet-core-binding" goto arg-enable-dotnet-core-binding
 if "%1" equ "--enable-java-binding" goto arg-enable-java-binding
 if "%1" equ "--enable-nodejs-binding" goto arg-enable_nodejs_binding
 if "%1" equ "--disable-ble-module" goto arg-disable_ble_module
@@ -65,7 +67,15 @@ set CMAKE_run_e2e_tests=ON
 goto args-continue
 
 :arg-enable-dotnet-binding
+if "%CMAKE_enable_dotnet_binding%" equ "ON" call :usage && exit /b 1
 set CMAKE_enable_dotnet_binding=ON
+set dotnet_binding_dotnet_core=OFF
+goto args-continue
+
+:arg-enable-dotnet-core-binding
+if "%CMAKE_enable_dotnet_binding%" equ "ON" call :usage && exit /b 1
+set CMAKE_enable_dotnet_binding=ON
+set dotnet_binding_dotnet_core=ON
 goto args-continue
 
 :arg-enable-java-binding
@@ -112,11 +122,11 @@ if not !ERRORLEVEL!==0 exit /b !ERRORLEVEL!
 pushd %cmake-root%
 if %build-platform% == x64 (
     echo ***Running CMAKE for Win64***
-        cmake %dependency_install_prefix% -Dskip_unittests:BOOL=%CMAKE_skip_unittests% -Drun_e2e_tests:BOOL=%CMAKE_run_e2e_tests% -Denable_dotnet_binding:BOOL=%CMAKE_enable_dotnet_binding% -Denable_java_binding:BOOL=%enable-java-binding% -Denable_nodejs_binding:BOOL=%enable_nodejs_binding% -Denable_ble_module:BOOL=%CMAKE_enable_ble_module% "%build-root%" -G "Visual Studio 14 Win64"
+        cmake %dependency_install_prefix% -Dskip_unittests:BOOL=%CMAKE_skip_unittests% -Drun_e2e_tests:BOOL=%CMAKE_run_e2e_tests% -Denable_dotnet_binding:BOOL=%CMAKE_enable_dotnet_binding% -Ddotnet_binding_dotnet_core:BOOL=%dotnet_binding_dotnet_core% -Denable_java_binding:BOOL=%enable-java-binding% -Denable_nodejs_binding:BOOL=%enable_nodejs_binding% -Denable_ble_module:BOOL=%CMAKE_enable_ble_module% "%build-root%" -G "Visual Studio 14 Win64"
         if not !ERRORLEVEL!==0 exit /b !ERRORLEVEL!
 ) else (
     echo ***Running CMAKE for Win32***
-        cmake %dependency_install_prefix% -Dskip_unittests:BOOL=%CMAKE_skip_unittests% -Drun_e2e_tests:BOOL=%CMAKE_run_e2e_tests% -Denable_dotnet_binding:BOOL=%CMAKE_enable_dotnet_binding% -Denable_java_binding:BOOL=%enable-java-binding% -Denable_nodejs_binding:BOOL=%enable_nodejs_binding% -Denable_ble_module:BOOL=%CMAKE_enable_ble_module% "%build-root%"
+        cmake %dependency_install_prefix% -Dskip_unittests:BOOL=%CMAKE_skip_unittests% -Drun_e2e_tests:BOOL=%CMAKE_run_e2e_tests% -Denable_dotnet_binding:BOOL=%CMAKE_enable_dotnet_binding% -Ddotnet_binding_dotnet_core:BOOL=%dotnet_binding_dotnet_core% -Denable_java_binding:BOOL=%enable-java-binding% -Denable_nodejs_binding:BOOL=%enable_nodejs_binding% -Denable_ble_module:BOOL=%CMAKE_enable_ble_module% "%build-root%"
         if not !ERRORLEVEL!==0 exit /b !ERRORLEVEL!
 )
 
@@ -139,19 +149,23 @@ rem ----------------------------------------------------------------------------
 :usage
 echo build.cmd [options]
 echo options:
-echo  --config value            Build configuration (e.g. [Debug], Release)
-echo  --platform value          Build platform (e.g. [Win32], x64, ...)
-echo  --skip-unittests          Do not build/run unit tests
-echo  --run-e2e-tests           Build/run end-to-end tests
-echo  --enable-dotnet-binding   Build the .NET binding
-echo  --enable-java-binding     Build the Java binding
-echo                            (JAVA_HOME must be defined in your environment)
-echo  --enable-nodejs-binding   Build Node.js binding
-echo                            (NODE_INCLUDE, NODE_LIB must be defined)
-echo  --disable-ble-module      Do not build the BLE module
-echo  --system-deps-path        Search for dependencies in a system-level location,
-echo                            e.g. "C:\Program Files (x86)", and install if not
-echo                            found. When this option is omitted the path is
-echo                            %local-install%.
+echo  --config value                Build configuration (e.g. [Debug], Release)
+echo  --platform value              Build platform (e.g. [Win32], x64, ...)
+echo  --skip-unittests              Do not build/run unit tests
+echo  --run-e2e-tests               Build/run end-to-end tests
+echo  --enable-dotnet-binding       Build the .NET binding
+echo                                (Cannot specify with
+echo                                 --enable-dotnet-core-binding)
+echo  --enable-dotnet-core-binding  Build the .NET Core binding
+echo                                (Cannot specify with --enable-dotnet-binding)
+echo  --enable-java-binding         Build the Java binding
+echo                                (JAVA_HOME must be defined in your environment)
+echo  --enable-nodejs-binding       Build Node.js binding
+echo                                (NODE_INCLUDE, NODE_LIB must be defined)
+echo  --disable-ble-module          Do not build the BLE module
+echo  --system-deps-path            Search for dependencies in a system-level
+echo                                location, e.g. "C:\Program Files (x86)", and
+echo                                install if not found. When this option is 
+echo                                omitted the path is %local-install%.
 goto :eof
 

@@ -20,7 +20,7 @@ typedef struct DOTNET_HOST_CONFIG_TAG
 
 MODULE_EXPORT const MODULE_API* Module_GetApi(MODULE_API_VERSION gateway_api_version);
 
-extern __declspec(dllexport) bool Module_DotNetHost_PublishMessage(BROKER_HANDLE broker, MODULE_HANDLE sourceModule, const unsigned char* message, int32_t size);
+extern MODULE_EXPORT bool Module_DotNetHost_PublishMessage(BROKER_HANDLE broker, MODULE_HANDLE sourceModule, const unsigned char* message, int32_t size);
 
 #ifdef __cplusplus
 }
