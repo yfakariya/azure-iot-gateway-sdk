@@ -35,7 +35,7 @@ rem ----------------------------------------------------------------------------
 rem // default build options
 set build-clean=0
 set build-config=Debug
-set build-platform=x86
+set build-platform="Any CPU"
 
 :args-loop
 if "%1" equ "" goto args-done
@@ -57,7 +57,7 @@ goto args-continue
 
 :arg-build-platform
 shift
-if "%1" equ "" call :usage && exit /b 1
+if "%~1" equ "" call :usage && exit /b 1
 set build-platform=%1
 goto args-continue
 
@@ -85,7 +85,12 @@ if not !errorlevel!==0 exit /b !errorlevel!
 
 rem ------------------
 rem -- run unit tests
-call  vstest.console "%build-root%\bindings\dotnet\dotnet-binding\Microsoft.Azure.IoT.Gateway.Test\bin\%build-platform%\%build-config%\Microsoft.Azure.IoT.Gateway.Test.dll" /Platform:%build-platform% /inIsolation
+set test-platform=x86
+if %build-platform% neq "Any CPU" (
+    set build-platform-dir=%build-platform%\
+    set test-platform=%build-platform%
+)
+call  vstest.console "%build-root%\bindings\dotnet\dotnet-binding\Microsoft.Azure.IoT.Gateway.Test\bin\%build-platform-dir%%build-config%\Microsoft.Azure.IoT.Gateway.Test.dll" /Platform:%test-platform% /inIsolation
 if not !errorlevel!==0 exit /b !errorlevel!
 rem ------------------
 
@@ -113,7 +118,7 @@ echo build.cmd [options]
 echo options:
 echo  -c, --clean           delete artifacts from previous build before building
 echo  --config ^<value^>      [Debug] build configuration (e.g. Debug, Release)
-echo  --platform ^<value^>    [x86] build platform (e.g. x86, x64, ...)
+echo  --platform ^<value^>    [Any CPU] build platform (e.g. x86, x64, ...)
 goto :eof
 
 rem -----------------------------------------------------------------------------
