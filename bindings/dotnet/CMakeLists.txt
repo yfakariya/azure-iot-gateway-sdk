@@ -21,6 +21,17 @@ set(dotnet_headers
     ./inc/dotnet.h
 )
 
+if(${enable_dotnet_binding_pinvoke})
+    set(dotnet_headers
+        ${dotnet_headers}
+        ./inc/pinvoke.h
+    )
+    set(dotnet_sources
+        ${dotnet_sources}
+        ./src/pinvoke.cpp
+    )
+endif()
+
 include_directories(./inc)
 include_directories(${GW_INC})
 include_directories(${IOTHUB_CLIENT_INC_FOLDER})
