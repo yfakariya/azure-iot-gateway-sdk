@@ -1,0 +1,1 @@
+powershell -ExecutionPolicy RemoteSigned -File ConvertTo-Utf8.ps1 ../deps/c-utility/inc/azure_c_shared_utility/xlogging.h ../deps/uamqp/src/connection.c ../deps/uamqp/src/frame_codec.c ../deps/uamqp/src/sasl_frame_codec.c ../deps/uamqp/src/saslclientio.c
