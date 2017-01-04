@@ -140,27 +140,59 @@ endif()
 
 include_directories(./inc)
 
-add_library(gateway
-    ${gateway_c_sources}
-    ${gateway_h_sources}
-)
+if(${build_shared})
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+    add_library(gateway SHARED
+        ${gateway_c_sources}
+        ${gateway_h_sources}
+    )
+
+    add_library(gatewayStatic STATIC
+        ${gateway_c_sources}
+        ${gateway_h_sources}
+    )
+else()
+    add_library(gateway
+        ${gateway_c_sources}
+        ${gateway_h_sources}
+    )
+endif()
 
 if(WIN32)
     target_link_libraries(gateway parson nanomsg aziotsharedutil ${dynamic_loader_library})
+
+    if(${build_shared})
+        target_link_libraries(gatewayStatic parson nanomsg aziotsharedutil ${dynamic_loader_library})
+    endif()
 else()
     target_link_libraries(gateway parson nanomsg aziotsharedutil ${dynamic_loader_library})
 
     target_link_libraries(gateway ${NN_REQUIRED_LIBRARIES})
     target_link_libraries(gateway m)
+
+    if(${build_shared})
+        target_link_libraries(gatewayStatic parson nanomsg aziotsharedutil ${dynamic_loader_library})
+        target_link_libraries(gatewayStatic ${NN_REQUIRED_LIBRARIES})
+        target_link_libraries(gatewayStatic m)
+    endif()
 endif()
 
 if(WIN32)
     target_link_libraries(gateway rpcrt4.lib)
+
+    if(${build_shared})
+        target_link_libraries(gatewayStatic rpcrt4.lib)
+    endif()
 else()
     find_package(PkgConfig REQUIRED)
     pkg_search_module(UIDLINUX REQUIRED uuid)
 
     target_link_libraries(gateway uuid)
+
+    if(${build_shared})
+        target_link_libraries(gatewayStatic uuid)
+    endif()
 endif()
 
 #this adds the tests to the build process
@@ -203,6 +235,15 @@ install(TARGETS gateway EXPORT gatewayTargets
     RUNTIME DESTINATION ${LIB_INSTALL_DIR}/../bin
     INCLUDES DESTINATION ${AIG_INCLUDE_DIRS}
 )
+
+if(${build_shared})
+    install(TARGETS gatewayStatic EXPORT gatewayTargets
+        LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+        ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+        RUNTIME DESTINATION ${LIB_INSTALL_DIR}/../bin
+        INCLUDES DESTINATION ${AIG_INCLUDE_DIRS}
+    )
+endif()
 install(FILES ${gateway_h_sources} DESTINATION ${AIG_HEADER_INSTALL_PREFIX})
 
 include(CMakePackageConfigHelpers)

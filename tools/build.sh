@@ -11,6 +11,7 @@ log_dir=$build_root
 skip_unittests=OFF
 run_e2e_tests=OFF
 run_valgrind=0
+build_shared=OFF
 enable_dotnet_binding=OFF
 enable_dotnet_binding_pinvoke=OFF
 enable_java_binding=OFF
@@ -32,6 +33,7 @@ usage ()
     echo " --toolchain-file <file>           Pass CMake a toolchain file for cross-compiling"
     echo " --skip-unittests                  Do not build/run unit tests"
     echo " --run-e2e-tests                   Build/run end-to-end tests"
+    echo " --build-shared                    Build shared library for dynamic loading"
     echo " --enable-dotnet-binding           Build the .NET Core binding
     echo " --enable-dotnet-binding-pinvoke   Enable P/Invoke from .NET Core for
     echo "                                   managed gateway mangement API
@@ -72,6 +74,7 @@ process_args ()
               "--run-e2e-tests" ) run_e2e_tests=ON;;
               "-cl" | "--compileoption" ) save_next_arg=1;;
               "-rv" | "--run-valgrind" ) run_valgrind=1;;
+              "--build-shared" ) build_shared=ON
               "--enable-dotnet-binding" ) enable_dotnet_binding=ON;;
               "--enable-dotnet-binding-pinvoke" ) enable_dotnet_binding_pinvoke=ON;;
               "--enable-java-binding" ) enable_java_binding=ON;;
@@ -133,6 +136,7 @@ cmake $toolchainfile \
       -DCMAKE_BUILD_TYPE=Debug \
       -Dskip_unittests:BOOL=$skip_unittests \
       -Drun_e2e_tests:BOOL=$run_e2e_tests \
+      -Dbuild_shared:BOOL=$build_shared \
       -Denable_dotnet_binding:BOOL=$enable_dotnet_binding \
       -Ddotnet_binding_dotnet_core:BOOL=ON \
       -Denable_dotnet_binding_pinvoke:BOOL=$enable_dotnet_binding_pinvoke \

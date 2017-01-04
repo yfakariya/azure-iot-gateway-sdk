@@ -24,6 +24,7 @@ set build-config=Debug
 set build-platform=Win32
 set CMAKE_skip_unittests=OFF
 set CMAKE_run_e2e_tests=OFF
+set build_shared=OFF
 set CMAKE_enable_dotnet_binding=OFF
 set dotnet_binding_dotnet_core=OFF
 set enable_dotnet_binding_pinvoke=OFF
@@ -38,6 +39,7 @@ if "%1" equ "--config" goto arg-build-config
 if "%1" equ "--platform" goto arg-build-platform
 if "%1" equ "--skip-unittests" goto arg-skip-unittests
 if "%1" equ "--run-e2e-tests" goto arg-run-e2e-tests
+if "%1" equ "--build-shared" goto arg-build-shared
 if "%1" equ "--enable-dotnet-binding" goto arg-enable-dotnet-binding
 if "%1" equ "--enable-dotnet-core-binding" goto arg-enable-dotnet-core-binding
 if "%1" equ "--enable-dotnet-binding-pinvoke" goto arg-enable-dotnet-binding-pinvoke
@@ -66,6 +68,10 @@ goto args-continue
 
 :arg-run-e2e-tests
 set CMAKE_run_e2e_tests=ON
+goto args-continue
+
+:arg-build-shared
+set build_shared=ON
 goto args-continue
 
 :arg-enable-dotnet-binding
@@ -128,11 +134,11 @@ if not !ERRORLEVEL!==0 exit /b !ERRORLEVEL!
 pushd %cmake-root%
 if %build-platform% == x64 (
     echo ***Running CMAKE for Win64***
-        cmake %dependency_install_prefix% -Dskip_unittests:BOOL=%CMAKE_skip_unittests% -Drun_e2e_tests:BOOL=%CMAKE_run_e2e_tests% -Denable_dotnet_binding:BOOL=%CMAKE_enable_dotnet_binding% -Ddotnet_binding_dotnet_core:BOOL=%dotnet_binding_dotnet_core% -Denable_dotnet_binding_pinvoke:BOOL=%enable_dotnet_binding_pinvoke% -Denable_java_binding:BOOL=%enable-java-binding% -Denable_nodejs_binding:BOOL=%enable_nodejs_binding% -Denable_ble_module:BOOL=%CMAKE_enable_ble_module% "%build-root%" -G "Visual Studio 14 Win64"
+        cmake %dependency_install_prefix% -Dskip_unittests:BOOL=%CMAKE_skip_unittests% -Drun_e2e_tests:BOOL=%CMAKE_run_e2e_tests% -Dbuild_shared:BOOL=%build_shared% -Denable_dotnet_binding:BOOL=%CMAKE_enable_dotnet_binding% -Ddotnet_binding_dotnet_core:BOOL=%dotnet_binding_dotnet_core% -Denable_dotnet_binding_pinvoke:BOOL=%enable_dotnet_binding_pinvoke% -Denable_java_binding:BOOL=%enable-java-binding% -Denable_nodejs_binding:BOOL=%enable_nodejs_binding% -Denable_ble_module:BOOL=%CMAKE_enable_ble_module% "%build-root%" -G "Visual Studio 14 Win64"
         if not !ERRORLEVEL!==0 exit /b !ERRORLEVEL!
 ) else (
     echo ***Running CMAKE for Win32***
-        cmake %dependency_install_prefix% -Dskip_unittests:BOOL=%CMAKE_skip_unittests% -Drun_e2e_tests:BOOL=%CMAKE_run_e2e_tests% -Denable_dotnet_binding:BOOL=%CMAKE_enable_dotnet_binding% -Ddotnet_binding_dotnet_core:BOOL=%dotnet_binding_dotnet_core% -Denable_dotnet_binding_pinvoke:BOOL=%enable_dotnet_binding_pinvoke% -Denable_java_binding:BOOL=%enable-java-binding% -Denable_nodejs_binding:BOOL=%enable_nodejs_binding% -Denable_ble_module:BOOL=%CMAKE_enable_ble_module% "%build-root%"
+        cmake %dependency_install_prefix% -Dskip_unittests:BOOL=%CMAKE_skip_unittests% -Drun_e2e_tests:BOOL=%CMAKE_run_e2e_tests% -Dbuild_shared:BOOL=%build_shared% -Denable_dotnet_binding:BOOL=%CMAKE_enable_dotnet_binding% -Ddotnet_binding_dotnet_core:BOOL=%dotnet_binding_dotnet_core% -Denable_dotnet_binding_pinvoke:BOOL=%enable_dotnet_binding_pinvoke% -Denable_java_binding:BOOL=%enable-java-binding% -Denable_nodejs_binding:BOOL=%enable_nodejs_binding% -Denable_ble_module:BOOL=%CMAKE_enable_ble_module% "%build-root%"
         if not !ERRORLEVEL!==0 exit /b !ERRORLEVEL!
 )
 
@@ -159,6 +165,7 @@ echo  --config value                    Build configuration (e.g. [Debug], Relea
 echo  --platform value                  Build platform (e.g. [Win32], x64, ...)
 echo  --skip-unittests                  Do not build/run unit tests
 echo  --run-e2e-tests                   Build/run end-to-end tests
+echo  --build-shared                    Build shared library for dynamic loading
 echo  --enable-dotnet-binding           Build the .NET binding
 echo                                    (Cannot specify with
 echo                                     --enable-dotnet-core-binding)
